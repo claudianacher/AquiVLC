@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Header } from '../components/Header';
 import { BannerNotice } from '../components/BannerNotice';
 import { HeroSection } from '../components/HeroSection';
@@ -15,6 +16,7 @@ import { culturalService } from '../services/culturalService';
 import { Smartphone, Monitor } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<Category>('Todo');
   const [searchQuery, setSearchQuery] = useState('');
   const [featuredActivity, setFeaturedActivity] = useState<CulturalActivity | null>(null);
@@ -68,17 +70,19 @@ export const HomePage: React.FC = () => {
   // Manejo de tabs de navegación inferior
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
-    if (tabId !== 'explorar') {
+    if (tabId === 'agenda') {
+      navigate('/agenda');
+    } else if (tabId === 'hoy') {
+      navigate('/hoy');
+    } else if (tabId !== 'explorar') {
       const tabNames: Record<string, string> = {
-        hoy: 'Actividades de Hoy en Valencia',
-        agenda: 'Agenda cultural de los próximos días',
         mapa: 'Mapa interactivo de planes culturales',
         guardados: 'Tus planes favoritos guardados',
       };
       setPendingModalInfo({
         isOpen: true,
         title: tabNames[tabId] || 'Pantalla en desarrollo',
-        description: `La pantalla «${tabNames[tabId] || tabId}» corresponde a las siguientes fases del diseño en Figma (Frames Hoy 23:2389, Agenda 23:2490, Mapa 23:2747 o Guardados 23:2854). En esta primera entrega se ha implementado el frame de entrada Escritorio/Inicio 01.`,
+        description: `La pantalla «${tabNames[tabId] || tabId}» corresponde a las siguientes fases del diseño en Figma (Frames Mapa 23:2747 o Guardados 23:2854).`,
       });
     }
   };
@@ -94,11 +98,7 @@ export const HomePage: React.FC = () => {
 
   // Abrir agenda desde la tarjeta promocional
   const handleOpenAgenda = () => {
-    setPendingModalInfo({
-      isOpen: true,
-      title: 'Agenda para el fin de semana (24 y 25 oct)',
-      description: 'Acceso a la programación completa de fin de semana en Valencia. Sección planificada para la fase de integración con Supabase.',
-    });
+    navigate('/agenda');
   };
 
   return (

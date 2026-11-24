@@ -1,6 +1,8 @@
 import {
   CulturalActivity,
   FEATURED_ACTIVITY,
+  HOY_ACTIVITIES,
+  AGENDA_ACTIVITIES,
   MOCK_ACTIVITIES,
   Category,
 } from '../data/mockData';
@@ -15,19 +17,48 @@ import {
  */
 class CulturalService {
   private activities: CulturalActivity[] = [...MOCK_ACTIVITIES];
-  private savedActivityIds: Set<string> = new Set(['activity-1']);
+  private savedActivityIds: Set<string> = new Set(['activity-1', 'hoy-2', 'hoy-4', 'agenda-1']);
 
   /**
    * Obtiene la actividad destacada de la portada ("Hoy nos inspira")
    */
   async getFeaturedActivity(): Promise<CulturalActivity> {
-    // Simula latencia de red leve para comportamiento asíncrono realista
     await new Promise((resolve) => setTimeout(resolve, 50));
     const featured = this.activities.find((a) => a.featured) || FEATURED_ACTIVITY;
     return {
       ...featured,
       isSaved: this.savedActivityIds.has(featured.id),
     };
+  }
+
+  /**
+   * Obtiene las actividades para la vista de Hoy
+   */
+  async getHoyActivities(category?: Category): Promise<CulturalActivity[]> {
+    await new Promise((resolve) => setTimeout(resolve, 40));
+    let list = [...HOY_ACTIVITIES];
+    if (category && category !== 'Todo') {
+      list = list.filter((a) => a.category === category);
+    }
+    return list.map((a) => ({
+      ...a,
+      isSaved: this.savedActivityIds.has(a.id),
+    }));
+  }
+
+  /**
+   * Obtiene las actividades para la vista de Agenda
+   */
+  async getAgendaActivities(category?: Category): Promise<CulturalActivity[]> {
+    await new Promise((resolve) => setTimeout(resolve, 40));
+    let list = [...AGENDA_ACTIVITIES];
+    if (category && category !== 'Todo') {
+      list = list.filter((a) => a.category === category);
+    }
+    return list.map((a) => ({
+      ...a,
+      isSaved: this.savedActivityIds.has(a.id),
+    }));
   }
 
   /**
