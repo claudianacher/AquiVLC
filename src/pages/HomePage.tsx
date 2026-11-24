@@ -13,10 +13,12 @@ import { PendingScreenModal } from '../components/PendingScreenModal';
 import { ActivityDetailModal } from '../components/ActivityDetailModal';
 import { Category, CulturalActivity, LanguageOption, AVAILABLE_LANGUAGES } from '../data/mockData';
 import { culturalService } from '../services/culturalService';
+import { useSavedActivities } from '../context/SavedActivitiesContext';
 import { Smartphone, Monitor } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const { isSaved, toggleSave } = useSavedActivities();
   const [selectedCategory, setSelectedCategory] = useState<Category>('Todo');
   const [searchQuery, setSearchQuery] = useState('');
   const [featuredActivity, setFeaturedActivity] = useState<CulturalActivity | null>(null);
@@ -47,17 +49,11 @@ export const HomePage: React.FC = () => {
 
   // Manejador de favoritos
   const handleToggleSave = async (activityId: string) => {
-    const isSaved = await culturalService.toggleSaveActivity(activityId);
-    if (featuredActivity && featuredActivity.id === activityId) {
-      setFeaturedActivity({
-        ...featuredActivity,
-        isSaved,
-      });
-    }
+    const nextSaved = await toggleSave(activityId);
     if (selectedActivityForDetail && selectedActivityForDetail.id === activityId) {
       setSelectedActivityForDetail({
         ...selectedActivityForDetail,
-        isSaved,
+        isSaved: nextSaved,
       });
     }
   };
@@ -74,26 +70,16 @@ export const HomePage: React.FC = () => {
       navigate('/agenda');
     } else if (tabId === 'hoy') {
       navigate('/hoy');
-    } else if (tabId !== 'explorar') {
-      const tabNames: Record<string, string> = {
-        mapa: 'Mapa interactivo de planes culturales',
-        guardados: 'Tus planes favoritos guardados',
-      };
-      setPendingModalInfo({
-        isOpen: true,
-        title: tabNames[tabId] || 'Pantalla en desarrollo',
-        description: `La pantalla «${tabNames[tabId] || tabId}» corresponde a las siguientes fases del diseño en Figma (Frames Mapa 23:2747 o Guardados 23:2854).`,
-      });
+    } else if (tabId === 'mapa') {
+      navigate('/mapa');
+    } else if (tabId === 'guardados') {
+      navigate('/guardados');
     }
   };
 
   // Ver más planes
   const handleViewMore = () => {
-    setPendingModalInfo({
-      isOpen: true,
-      title: 'Catálogo completo de planes',
-      description: 'Esta acción abrirá la vista completa con los planes destacados del día conforme a la siguiente pantalla de la agenda.',
-    });
+    navigate('/hoy');
   };
 
   // Abrir agenda desde la tarjeta promocional
@@ -184,10 +170,10 @@ export const HomePage: React.FC = () => {
             {/* Actividad destacada del día ("Hoy nos inspira") */}
             {featuredActivity && (
               <FeaturedCard
-                activity={featuredActivity}
+                activity={{ ...featuredActivity, isSaved: isSaved(featuredActivity.id) }}
                 onToggleSave={handleToggleSave}
                 onViewMore={handleViewMore}
-                onSelectActivity={(activity) => setSelectedActivityForDetail(activity)}
+                onSelectActivity={(activity) => setSelectedActivityForDetail({ ...activity, isSaved: isSaved(activity.id) })}
               />
             )}
 

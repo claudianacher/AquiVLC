@@ -11,10 +11,12 @@ import { ActivityDetailModal } from '../components/ActivityDetailModal';
 import { PendingScreenModal } from '../components/PendingScreenModal';
 import { Category, CulturalActivity } from '../data/mockData';
 import { culturalService } from '../services/culturalService';
+import { useSavedActivities } from '../context/SavedActivitiesContext';
 import { Smartphone, Monitor } from 'lucide-react';
 
 export const AgendaPage: React.FC = () => {
   const navigate = useNavigate();
+  const { isSaved, toggleSave } = useSavedActivities();
   const [selectedCategory, setSelectedCategory] = useState<Category>('Todo');
   const [selectedDay, setSelectedDay] = useState<number>(24);
   const [activities, setActivities] = useState<CulturalActivity[]>([]);
@@ -37,14 +39,11 @@ export const AgendaPage: React.FC = () => {
   }, [selectedCategory]);
 
   const handleToggleSave = async (activityId: string) => {
-    const isSaved = await culturalService.toggleSaveActivity(activityId);
-    setActivities((prev) =>
-      prev.map((act) => (act.id === activityId ? { ...act, isSaved } : act))
-    );
+    const nextSaved = await toggleSave(activityId);
     if (selectedActivityForDetail && selectedActivityForDetail.id === activityId) {
       setSelectedActivityForDetail({
         ...selectedActivityForDetail,
-        isSaved,
+        isSaved: nextSaved,
       });
     }
   };
@@ -56,16 +55,10 @@ export const AgendaPage: React.FC = () => {
       navigate('/hoy');
     } else if (tabId === 'agenda') {
       // Ya estamos en agenda
-    } else {
-      const tabNames: Record<string, string> = {
-        mapa: 'Mapa interactivo de planes culturales',
-        guardados: 'Tus planes favoritos guardados',
-      };
-      setPendingModalInfo({
-        isOpen: true,
-        title: tabNames[tabId] || 'Pantalla en desarrollo',
-        description: `La pantalla «${tabNames[tabId] || tabId}» corresponde a los frames complementarios de Figma.`,
-      });
+    } else if (tabId === 'mapa') {
+      navigate('/mapa');
+    } else if (tabId === 'guardados') {
+      navigate('/guardados');
     }
   };
 
@@ -185,16 +178,12 @@ export const AgendaPage: React.FC = () => {
             {albuferaActivity && (
               <div className="flex flex-col gap-3.5 w-full" data-name="Fecha seleccionada">
                 <FeaturedCard
-                  activity={albuferaActivity}
+                  activity={{ ...albuferaActivity, isSaved: isSaved(albuferaActivity.id) }}
                   onToggleSave={handleToggleSave}
                   onViewMore={() => {
-                    setPendingModalInfo({
-                      isOpen: true,
-                      title: 'Planes del Sábado, 24 oct',
-                      description: 'Muestra la lista de todos los planes disponibles para este día.',
-                    });
+                    navigate('/hoy');
                   }}
-                  onSelectActivity={(act) => setSelectedActivityForDetail(act)}
+                  onSelectActivity={(act) => setSelectedActivityForDetail({ ...act, isSaved: isSaved(act.id) })}
                 />
               </div>
             )}
@@ -209,9 +198,9 @@ export const AgendaPage: React.FC = () => {
                 </div>
 
                 <HorizontalActivityCard
-                  activity={cabanyalActivity}
+                  activity={{ ...cabanyalActivity, isSaved: isSaved(cabanyalActivity.id) }}
                   onToggleSave={handleToggleSave}
-                  onSelectActivity={(act) => setSelectedActivityForDetail(act)}
+                  onSelectActivity={(act) => setSelectedActivityForDetail({ ...act, isSaved: isSaved(act.id) })}
                 />
               </div>
             )}

@@ -9,10 +9,12 @@ import { ActivityDetailModal } from '../components/ActivityDetailModal';
 import { PendingScreenModal } from '../components/PendingScreenModal';
 import { Category, CulturalActivity } from '../data/mockData';
 import { culturalService } from '../services/culturalService';
+import { useSavedActivities } from '../context/SavedActivitiesContext';
 import { Smartphone, Monitor } from 'lucide-react';
 
 export const HoyPage: React.FC = () => {
   const navigate = useNavigate();
+  const { isSaved, toggleSave } = useSavedActivities();
   const [selectedCategory, setSelectedCategory] = useState<Category>('Todo');
   const [activities, setActivities] = useState<CulturalActivity[]>([]);
   const [selectedActivityForDetail, setSelectedActivityForDetail] = useState<CulturalActivity | null>(null);
@@ -34,14 +36,11 @@ export const HoyPage: React.FC = () => {
   }, [selectedCategory]);
 
   const handleToggleSave = async (activityId: string) => {
-    const isSaved = await culturalService.toggleSaveActivity(activityId);
-    setActivities((prev) =>
-      prev.map((act) => (act.id === activityId ? { ...act, isSaved } : act))
-    );
+    const nextSaved = await toggleSave(activityId);
     if (selectedActivityForDetail && selectedActivityForDetail.id === activityId) {
       setSelectedActivityForDetail({
         ...selectedActivityForDetail,
-        isSaved,
+        isSaved: nextSaved,
       });
     }
   };
@@ -53,25 +52,15 @@ export const HoyPage: React.FC = () => {
       navigate('/agenda');
     } else if (tabId === 'hoy') {
       // Ya estamos en hoy
-    } else {
-      const tabNames: Record<string, string> = {
-        mapa: 'Mapa interactivo de planes culturales',
-        guardados: 'Tus planes favoritos guardados',
-      };
-      setPendingModalInfo({
-        isOpen: true,
-        title: tabNames[tabId] || 'Pantalla en desarrollo',
-        description: `La pantalla «${tabNames[tabId] || tabId}» corresponde a los frames complementarios de Figma.`,
-      });
+    } else if (tabId === 'mapa') {
+      navigate('/mapa');
+    } else if (tabId === 'guardados') {
+      navigate('/guardados');
     }
   };
 
   const handleOpenMap = () => {
-    setPendingModalInfo({
-      isOpen: true,
-      title: 'Mapa de actividades de hoy',
-      description: 'Geolocalización en mapa interactivo de los planes activos de la jornada (Frame Mapa 23:2747).',
-    });
+    navigate('/mapa');
   };
 
   return (
@@ -200,9 +189,9 @@ export const HoyPage: React.FC = () => {
               {activities.map((activity) => (
                 <HorizontalActivityCard
                   key={activity.id}
-                  activity={activity}
+                  activity={{ ...activity, isSaved: isSaved(activity.id) }}
                   onToggleSave={handleToggleSave}
-                  onSelectActivity={(act) => setSelectedActivityForDetail(act)}
+                  onSelectActivity={(act) => setSelectedActivityForDetail({ ...act, isSaved: isSaved(act.id) })}
                 />
               ))}
             </div>
